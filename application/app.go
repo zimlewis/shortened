@@ -6,16 +6,21 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/zimlewis/shortened/handler"
 )
 
 type Application struct {
 	handler http.Handler
+	Channel      chan []byte
 }
 
-func New() *Application {
-	return &Application {
-		handler: loadHandler(),
+func New(eventCh chan []byte) *Application {
+	app := &Application {
+		Channel: eventCh,
 	}
+	app.handler = app.loadHandler();
+
+	return app
 }
 
 func (a *Application) Start() error {
@@ -32,9 +37,11 @@ func (a *Application) Start() error {
 	return nil
 }
 
-func loadHandler() *chi.Mux {
+func (app *Application) loadHandler() *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
+
+	router.Get("/{id}", handler.RedirectShortened(app.Channel))
 
 	return router
 }
