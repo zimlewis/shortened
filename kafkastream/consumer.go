@@ -39,13 +39,13 @@ func (self *Consumer) Start() error {
 			continue
 		}
 
-		count, err := repo.IncreaseLinkClick(self.ctx, string(msg.Value))
+		_, err = repo.IncreaseLinkClick(self.ctx, string(msg.Value))
 		if err != nil {
 			fmt.Printf("Cannot increase the count: %s\n", err.Error())
 			continue
 		}
 
-		fmt.Printf("%s has clicked %d times\n", string(msg.Value), count)
+		// fmt.Printf("%s has clicked %d times\n", string(msg.Value), count)
 		err = r.CommitMessages(self.ctx, msg)
 		if err != nil {
 			fmt.Printf("Cannot commit message: %s\n", err.Error())

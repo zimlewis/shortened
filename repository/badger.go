@@ -101,7 +101,32 @@ func (repo *BadgerRepository) IncreaseLinkClick(ctx context.Context, shortened s
 	return int(totalClick), nil
 }
 
-func (repo *BadgerRepository) GetClickedCount(ctx context.Context, shortened string) (int, error) {
-	return 0, nil
+func (repo *BadgerRepository) GetClickedCount(ctx context.Context, shortened string) (uint32, error) {
+	db := repo.db
+
+	var totalClick uint32 = 0
+	err := db.Update(func(txn *badger.Txn) error {
+		key := fmt.Appendf(nil, "%s:count", shortened)
+		buf := make([]byte, 4)
+
+		item, err := txn.Get(key)
+		if err != nil {
+			return fmt.Errorf("Error retrieving item: %w", err)
+		}
+
+		buf, err = item.ValueCopy(nil)
+		if err != nil {
+			return fmt.Errorf("Error copying value: %w", err)
+		}
+
+		totalClick = binary.LittleEndian.Uint32(buf)
+
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return totalClick, nil
 }
 

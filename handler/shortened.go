@@ -30,6 +30,24 @@ func RedirectShortened(
 	}
 }
 
+func GetShortenedCount(
+	repo repository.Repository,
+) http.HandlerFunc {
+	return func(response http.ResponseWriter, request *http.Request) {
+		ctx := request.Context()
+		path := chi.URLParam(request, "id") 
+
+		count, err := repo.GetClickedCount(ctx, path)
+		if err != nil {
+			response.Write([]byte("Error"))
+			fmt.Printf("Cannot get the count of link %s: %s", path, err.Error())
+			return
+		}
+
+		fmt.Fprintf(response, "%d", count)
+	}
+}
+
 func AddShortened(
 	repo repository.Repository,
 ) http.HandlerFunc {
