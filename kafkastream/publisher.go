@@ -9,34 +9,44 @@ import (
 )
 
 type Publisher struct {
-	ctx    context.Context
 	config *global.Config
 }
 
 func NewPublisher(
-	ctx context.Context,
 	config *global.Config,
 ) *Publisher {
 	return &Publisher{
-		ctx:    ctx,
 		config: config,
 	}
 }
 
-func (self *Publisher) Start() error {
-	w := kafka.NewWriter(self.config.WriterConfig)
-	c := self.config.WriteMessageChannel
+func (self *Publisher) Start(ctx context.Context) error {
+	writer := kafka.NewWriter(self.config.WriterConfig)
+	defer func () {
+		fmt.Println("Closing kafka publisher...")
+		err := writer.Close()
+		if err != nil {
+			fmt.Printf("Cannot close publisher: %s\n", err.Error())
+		}
+	}()
+	messageChan := self.config.WriteMessageChannel
 
-	for e := range c {
-		go func() {
-			err := w.WriteMessages(self.ctx, kafka.Message{
-				Value: e,
-			})
+	loop:
+	for {
+		var messageToWrite []byte
 
-			if err != nil {
-				fmt.Printf("Cannot write message %s\n", err.Error())
-			}
-		}()
+		select {
+		case <- ctx.Done(): break loop 
+		case messageToWrite = <- messageChan:
+		}
+
+		err := writer.WriteMessages(ctx, kafka.Message{
+			Value: messageToWrite,
+		})
+
+		if err != nil {
+			fmt.Printf("Cannot write message %s\n", err.Error())
+		}
 	}
 
 	return nil

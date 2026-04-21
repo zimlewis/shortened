@@ -1,8 +1,10 @@
 package application
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -24,18 +26,40 @@ func New(eventCh chan []byte, appConfig *global.Config) *Application {
 	return app
 }
 
-func (a *Application) Start() error {
+func (a *Application) Start(ctx context.Context) error {
 	server := &http.Server{
 		Handler: a.handler,
 		Addr:    ":3000",
 	}
+	defer func() {
+		fmt.Println("Closing server...")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second * 5)
+		defer cancel()
 
-	err := server.ListenAndServe()
-	if err != nil {
-		return fmt.Errorf("Cannot start server: %w", err)
+		err := server.Shutdown(shutdownCtx)
+		if err != nil {
+			fmt.Printf("Cannot close server: %s\n", err.Error())
+		}
+	}() 
+
+	errChan := make(chan error, 1)
+	var err error
+
+	go func(){
+		errChan <- server.ListenAndServe()
+	}()
+
+	select {
+	case <- ctx.Done():
+		return nil
+	case err = <- errChan:
+        // ListenAndServe always returns a non-nil error
+        // ErrServerClosed is expected on normal shutdown, not a real error
+        if err != http.ErrServerClosed {
+            return fmt.Errorf("server error: %w", err)
+        }
+        return nil
 	}
-
-	return nil
 }
 
 func (app *Application) loadHandler() *chi.Mux {

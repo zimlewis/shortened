@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
@@ -15,6 +16,9 @@ import (
 )
 
 func main() {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
 	eventChannel := make(chan []byte)
 	defer close(eventChannel)
 
@@ -54,11 +58,10 @@ func main() {
 	go func() {
 
 		publisher := kafkastream.NewPublisher(
-			context.Background(),
 			config,
 		)
 
-		err := publisher.Start()
+		err := publisher.Start(ctx)
 		if err != nil {
 			fmt.Printf("Cannot start kafka connection: %s", err.Error())
 			panic(1)
@@ -67,18 +70,18 @@ func main() {
 
 	// Reader goroutin
 	go func () {
-		consumer := kafkastream.NewConsumer(	
-			context.Background(),
+		consumer := kafkastream.NewConsumer(
 			config,
 		)
-		
-		err := consumer.Start()
+
+		err := consumer.Start(ctx)
 		if err != nil {
 			fmt.Printf("Cannot start kafka connection: %s", err.Error())
 			panic(1)
 		}
 	}()
-	err = app.Start()
+
+	err = app.Start(ctx)
 	if err != nil {
 		fmt.Printf("Cannot start application: %s", err.Error())
 	}

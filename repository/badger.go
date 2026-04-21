@@ -102,31 +102,27 @@ func (repo *BadgerRepository) IncreaseLinkClick(ctx context.Context, shortened s
 }
 
 func (repo *BadgerRepository) GetClickedCount(ctx context.Context, shortened string) (uint32, error) {
-	db := repo.db
+    if err := ctx.Err(); err != nil {
+        return 0, err
+    }
 
-	var totalClick uint32 = 0
-	err := db.Update(func(txn *badger.Txn) error {
-		key := fmt.Appendf(nil, "%s:count", shortened)
-		buf := make([]byte, 4)
+    var click uint32
+    err := repo.db.View(func(txn *badger.Txn) error {
+        key := fmt.Appendf(nil, "%s:count", shortened)
 
-		item, err := txn.Get(key)
-		if err != nil {
-			return fmt.Errorf("Error retrieving item: %w", err)
-		}
+        item, err := txn.Get(key)
+        if err != nil {
+            return fmt.Errorf("error retrieving item: %w", err)
+        }
 
-		buf, err = item.ValueCopy(nil)
-		if err != nil {
-			return fmt.Errorf("Error copying value: %w", err)
-		}
+        buf, err := item.ValueCopy(nil)
+        if err != nil {
+            return fmt.Errorf("error copying value: %w", err)
+        }
 
-		totalClick = binary.LittleEndian.Uint32(buf)
+        click = binary.LittleEndian.Uint32(buf)
+        return nil
+    })
 
-		return nil
-	})
-	if err != nil {
-		return 0, err
-	}
-
-	return totalClick, nil
+    return click, err
 }
-
