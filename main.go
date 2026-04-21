@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
@@ -10,20 +11,30 @@ import (
 	"github.com/zimlewis/shortened/application"
 	"github.com/zimlewis/shortened/global"
 	"github.com/zimlewis/shortened/kafkastream"
+	"github.com/zimlewis/shortened/repository"
 )
 
 func main() {
 	eventChannel := make(chan []byte)
 	defer close(eventChannel)
 
+	badgerOptions := badger.DefaultOptions("./tmp/badger/")
+	badgerOptions.Logger = nil
+	repo, err := repository.NewBadger(&badgerOptions)
+	if err != nil {
+		fmt.Printf("Cannot start badger db: %s", err.Error())
+		os.Exit(1)
+	}
+	defer repo.Close()
+
 	config := &global.Config {
-		BadgerOptions: badger.DefaultOptions("./tmp/badger/"),
+		Repository: repo,
 		WriteMessageChannel: eventChannel,
 		WriterConfig: kafka.WriterConfig{
 			Brokers: []string{string("127.0.0.1:34439")},
 			Topic:   "smth",
 			Balancer: &kafka.Hash{},
-			BatchSize:    100,               // how many messages to batch before flushing
+			BatchSize:    1,               // how many messages to batch before flushing
 			BatchTimeout: 10 * time.Millisecond, // flush at least every 10ms even if batch isn't full
 			Async:        false,             // true = fire and forget, no error returned
 		},
@@ -67,7 +78,7 @@ func main() {
 			panic(1)
 		}
 	}()
-	err := app.Start()
+	err = app.Start()
 	if err != nil {
 		fmt.Printf("Cannot start application: %s", err.Error())
 	}

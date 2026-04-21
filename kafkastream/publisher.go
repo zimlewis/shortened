@@ -8,18 +8,17 @@ import (
 	"github.com/zimlewis/shortened/global"
 )
 
-
 type Publisher struct {
-	ctx       context.Context
+	ctx    context.Context
 	config *global.Config
 }
 
 func NewPublisher(
-	ctx    context.Context,
+	ctx context.Context,
 	config *global.Config,
 ) *Publisher {
 	return &Publisher{
-		ctx:       ctx,
+		ctx:    ctx,
 		config: config,
 	}
 }

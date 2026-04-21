@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/zimlewis/shortened/global"
 	"github.com/zimlewis/shortened/handler"
-	"github.com/zimlewis/shortened/repository"
 )
 
 type Application struct {
@@ -43,9 +42,10 @@ func (app *Application) loadHandler() *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 
-	repo := repository.New(app.appConfig)
+	repo := app.appConfig.Repository
+	messageChannel := app.appConfig.WriteMessageChannel
 
-	router.Get("/{id}", handler.RedirectShortened(app.appConfig.WriteMessageChannel, repo))
+	router.Get("/{id}", handler.RedirectShortened(messageChannel, repo))
 	router.Post("/", handler.AddShortened(repo))
 
 	return router

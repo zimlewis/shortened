@@ -12,7 +12,7 @@ import (
 
 func RedirectShortened(
 	eventChannle chan []byte, 
-	repo *repository.Repository,
+	repo repository.Repository,
 ) http.HandlerFunc {
 	return func(response http.ResponseWriter, request *http.Request) {
 		ctx := request.Context()
@@ -31,7 +31,7 @@ func RedirectShortened(
 }
 
 func AddShortened(
-	repo *repository.Repository,
+	repo repository.Repository,
 ) http.HandlerFunc {
 	type Body struct {
 		Shortened string `json:"shortened"`
