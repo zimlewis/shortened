@@ -5,17 +5,18 @@ import (
 	"fmt"
 
 	"github.com/segmentio/kafka-go"
+	"github.com/zimlewis/shortened/global"
 )
 
 
 type Publisher struct {
-	ctx    context.Context
-	config kafka.WriterConfig
+	ctx       context.Context
+	config *global.Config
 }
 
 func NewPublisher(
 	ctx    context.Context,
-	config kafka.WriterConfig,
+	config *global.Config,
 ) *Publisher {
 	return &Publisher{
 		ctx:       ctx,
@@ -23,8 +24,9 @@ func NewPublisher(
 	}
 }
 
-func (self *Publisher) Start(c chan []byte) error {
-	w := kafka.NewWriter(self.config)
+func (self *Publisher) Start() error {
+	w := kafka.NewWriter(self.config.WriterConfig)
+	c := self.config.WriteMessageChannel
 
 	for e := range c {
 		go func() {

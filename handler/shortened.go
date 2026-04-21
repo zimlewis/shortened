@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dgraph-io/badger/v4"
 	"github.com/go-chi/chi/v5"
 	"github.com/zimlewis/shortened/repository"
 )
@@ -48,8 +47,6 @@ func AddShortened(
 			fmt.Printf("Cannot get the request body: %s\n", err.Error())
 			return
 		}
-
-		repo := repository.New(badger.DefaultOptions("./tmp/badger"))
 
 		err = repo.AddShortenedLink(ctx, body.Shortened, body.Full)
 		if err != nil {

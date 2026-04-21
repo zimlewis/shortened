@@ -5,21 +5,22 @@ import (
 	"fmt"
 
 	badger "github.com/dgraph-io/badger/v4"
+	"github.com/zimlewis/shortened/global"
 )
 
 type Repository struct {
-	options badger.Options
+	config *global.Config
 }
 
 
-func New(options badger.Options) (*Repository) {
+func New(options *global.Config) (*Repository) {
 	return &Repository{
-		options: options,
+		config: options,
 	}
 }
 
 func (repo *Repository) AddShortenedLink(ctx context.Context, shortened string, full string) error {
-	db, err := badger.Open(repo.options)
+	db, err := badger.Open(repo.config.BadgerOptions)
 	if err != nil {
 		return fmt.Errorf("Cannot open database %w", err)
 	}
@@ -38,7 +39,7 @@ func (repo *Repository) AddShortenedLink(ctx context.Context, shortened string, 
 }
 
 func (repo *Repository) GetShortenedResult(ctx context.Context, shortened string) (string, error) {
-	db, err := badger.Open(repo.options)
+	db, err := badger.Open(repo.config.BadgerOptions)
 	if err != nil {
 		return "", fmt.Errorf("Cannot open database %w", err)
 	}
@@ -65,5 +66,7 @@ func (repo *Repository) GetShortenedResult(ctx context.Context, shortened string
 }
 
 
-
+func (repo *Repository) IncreaseLinkClick(ctx context.Context, shortened string) (int, error) {
+	return 0, nil
+}
 

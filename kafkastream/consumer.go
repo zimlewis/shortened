@@ -5,16 +5,17 @@ import (
 	"fmt"
 
 	"github.com/segmentio/kafka-go"
+	"github.com/zimlewis/shortened/global"
 )
 
 type Consumer struct {
 	ctx context.Context
-	config kafka.ReaderConfig
+	config *global.Config
 }
 
 func NewConsumer(
 	ctx    context.Context,
-	config kafka.ReaderConfig,
+	config *global.Config,
 ) *Consumer {
 	return &Consumer {
 		ctx: ctx,
@@ -23,7 +24,7 @@ func NewConsumer(
 }
 
 func (self *Consumer) Start() error {
-	r := kafka.NewReader(self.config)
+	r := kafka.NewReader(self.config.ReaderConfig)
 	defer r.Close()
 
 	for {

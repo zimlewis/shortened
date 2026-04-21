@@ -4,23 +4,21 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dgraph-io/badger/v4"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/zimlewis/shortened/global"
 	"github.com/zimlewis/shortened/handler"
 	"github.com/zimlewis/shortened/repository"
 )
 
 type Application struct {
-	handler http.Handler
-	Channel chan []byte
-	Repo    *repository.Repository
+	handler   http.Handler
+	appConfig *global.Config
 }
 
-func New(eventCh chan []byte, options badger.Options) *Application {
+func New(eventCh chan []byte, appConfig *global.Config) *Application {
 	app := &Application{
-		Channel: eventCh,
-		Repo: repository.New(options),
+		appConfig: appConfig,
 	}
 	app.handler = app.loadHandler()
 
@@ -45,8 +43,10 @@ func (app *Application) loadHandler() *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 
-	router.Get("/{id}", handler.RedirectShortened(app.Channel, app.Repo))
-	router.Post("/", handler.AddShortened(app.Repo))
+	repo := repository.New(app.appConfig)
+
+	router.Get("/{id}", handler.RedirectShortened(app.appConfig.WriteMessageChannel, repo))
+	router.Post("/", handler.AddShortened(repo))
 
 	return router
 }
