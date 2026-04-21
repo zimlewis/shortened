@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/dgraph-io/badger/v4"
 	"github.com/segmentio/kafka-go"
 	"github.com/zimlewis/shortened/application"
 	"github.com/zimlewis/shortened/kafkastream"
@@ -13,7 +14,7 @@ import (
 func main() {
 	eventChannel := make(chan []byte)
 	defer close(eventChannel)
-	app := application.New(eventChannel)
+	app := application.New(eventChannel, badger.DefaultOptions("./tmp/badger"))
 
 	go func() {
 		config := kafka.WriterConfig{
