@@ -25,6 +25,59 @@ func (repo *BadgerRepository) Close() {
 	repo.db.Close()
 }
 
+func (repo *BadgerRepository) DeleteShortenedLink(ctx context.Context, shortened string) error {
+	db := repo.db
+
+	err := db.View(func(txn *badger.Txn) error {
+		keyPrefix := fmt.Appendf(nil, "%s:", shortened)
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = false
+
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		for it.Seek(keyPrefix); it.ValidForPrefix(keyPrefix); it.Next() {
+			key := it.Item().KeyCopy(nil)
+
+			err := db.Update(func(txn *badger.Txn) error {
+				return txn.Delete(key)
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("Cannot delete from badger: %w", err)
+	}
+
+	return nil
+}
+
+func (repo *BadgerRepository) UpdateShortenedLink(ctx context.Context, shortened string, full string) error {
+	db := repo.db
+
+	err := db.Update(func(txn *badger.Txn) error {
+		key := fmt.Appendf(nil, "%s:full", shortened)
+		_, err := txn.Get(key)
+		if err == badger.ErrKeyNotFound {
+			return badger.ErrKeyNotFound
+		}
+
+		err = txn.Set(key, []byte(full))
+		return err
+	})
+
+	if err != nil {
+		return fmt.Errorf("Cannot update badger: %w", err)
+	}
+
+	return nil
+}
+
+
 func (repo *BadgerRepository) AddShortenedLink(ctx context.Context, shortened string, full string) error {
 	db := repo.db
 
