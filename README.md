@@ -25,6 +25,33 @@ git clone https://github.com/zimlewis/shortened.git
 docker compose up
 ```
 
+### Endpoint
+
+| Method | Endpoint | Description | Request Body |
+| --- | --- | --- | --- |
+| `POST` | `/` | Add a new shortened link | `{"shortened": "slug", "full": "https://example.com"}` |
+| `GET` | `/{id}` | Redirect to the full URL | N/A |
+| `GET` | `/{id}/count` | Get the click count for a link | N/A |
+| `PUT` | `/{id}` | Update the full URL of an existing link | `{"full": "https://new-url.com"}` |
+| `DELETE` | `/{id}` | Delete a shortened link | N/A |
+
+#### Examples
+
+**Create a link**
+```bash
+curl -X POST http://localhost:8080/ \
+     -H "Content-Type: application/json" \
+     -d '{"shortened": "ggl", "full": "https://google.com"}'
+```
+
+**Get click count**
+```bash
+curl http://localhost:8080/ggl/count
+```
+
+
+
+
 ## Help
 
 See compose.yaml to setup your own environment
