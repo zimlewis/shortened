@@ -54,19 +54,20 @@ func main() {
 		WriteMessageChannel: eventChannel,
 		WriterConfig: kafka.WriterConfig{
 			Brokers: []string{broker},
-			Topic:   "smth",
+			Topic:   "url-click",
 			Balancer: &kafka.Hash{},
 			BatchSize:    1,               // how many messages to batch before flushing
-			BatchTimeout: 10 * time.Millisecond, // flush at least every 10ms even if batch isn't full
+			BatchTimeout: 500 * time.Millisecond, // flush at least every 10ms even if batch isn't full
 			Async:        false,             // true = fire and forget, no error returned
 		},
 		ReaderConfig: kafka.ReaderConfig{
 			Brokers:   []string{broker},
-			Topic:     "smth",
-			GroupID:   "group-0",
+			Topic:     "url-click",
+			GroupID:   "group-1",
 			MinBytes:  1,
 			MaxBytes:  1e6,
-			MaxWait:   time.Millisecond,
+			MaxWait:   500 * time.Millisecond,
+			StartOffset: kafka.FirstOffset,
 		},
 	}
 
