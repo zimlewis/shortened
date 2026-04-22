@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -28,7 +29,14 @@ func (repo *BadgerRepository) AddShortenedLink(ctx context.Context, shortened st
 	db := repo.db
 
 	err := db.Update(func(txn *badger.Txn) error {
-		err := txn.Set(fmt.Appendf(nil, "%s:full", shortened), []byte(full)) 
+		key := fmt.Appendf(nil, "%s:full", shortened)
+		_, err := txn.Get(key)
+		if err != badger.ErrKeyNotFound || err == nil {
+			return errors.New("Cannot add link to already exist shorten link")
+		}
+
+
+		err = txn.Set(fmt.Appendf(nil, "%s:full", shortened), []byte(full)) 
 		return err
 	})
 
@@ -50,8 +58,11 @@ func (repo *BadgerRepository) GetShortenedResult(ctx context.Context, shortened 
 		}
 
 		fullLink, err = item.ValueCopy(nil)
+		if err != nil {
+			return fmt.Errorf("Cannot copy the value: %w", err)
+		}
 
-		return err
+		return nil
 	})
 	
 	if err != nil {
