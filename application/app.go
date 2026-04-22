@@ -72,6 +72,8 @@ func (app *Application) loadHandler() *chi.Mux {
 	router.Get("/{id}", handler.RedirectShortened(messageChannel, repo))
 	router.Get("/{id}/count", handler.GetShortenedCount(repo))
 	router.Post("/", handler.AddShortened(repo))
+	router.Delete("/{id}", handler.DeleteShortened(repo))
+	router.Put("/{id}", handler.UpdateShortened(repo))
 
 	return router
 }

@@ -10,6 +10,85 @@ import (
 	"github.com/zimlewis/shortened/repository"
 )
 
+func DeleteShortened(
+	repo repository.Repository,
+) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		ctx := request.Context()
+		path := chi.URLParam(request, "id") 
+		writer.Header().Set("Content-Type", "application/json")
+
+		err := repo.DeleteShortenedLink(ctx, path)
+		if err != nil {
+			fmt.Printf("Cannot remove from database: %s\n", err.Error())
+
+			var rsp = JSON {
+				"error": "Cannot delete shortened link",
+			}
+			b, err := json.Marshal(rsp)
+
+			if err == nil {
+				writer.Write(b)
+			}
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		writer.WriteHeader(http.StatusOK)
+	}
+}
+
+func UpdateShortened(
+	repo repository.Repository,
+) http.HandlerFunc {
+	type Body struct {
+		Full      string `json:"full"`
+	}
+
+	return func(writer http.ResponseWriter, request *http.Request) {
+		var body Body
+		ctx := request.Context()
+		path := chi.URLParam(request, "id") 
+
+		writer.Header().Set("Content-Type", "application/json")
+
+
+		err := json.NewDecoder(request.Body).Decode(&body)
+		if err != nil {
+			fmt.Printf("Cannot add to database: %s\n", err.Error())
+
+			var rsp = JSON {
+				"error": "Cannot decode the body",
+			}
+			b, err := json.Marshal(rsp)
+
+			if err == nil {
+				writer.Write(b)
+			}
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err = repo.UpdateShortenedLink(ctx, path, body.Full)
+		if err != nil {
+			fmt.Printf("Cannot add to database: %s\n", err.Error())
+
+			var rsp = JSON {
+				"error": "Cannot update shortened link",
+			}
+			b, err := json.Marshal(rsp)
+
+			if err == nil {
+				writer.Write(b)
+			}
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		writer.WriteHeader(http.StatusOK)
+	}
+}
+
 func RedirectShortened(
 	eventChannle chan []byte, 
 	repo repository.Repository,
