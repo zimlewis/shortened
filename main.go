@@ -16,13 +16,31 @@ import (
 )
 
 func main() {
+	badgerLocation := os.Getenv("BADGER_DIR")
+	if badgerLocation == "" {
+		fmt.Println("Cannot get badger directory in environment variables")
+		panic(1)
+	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		fmt.Println("Cannot get port in environment variables")
+		panic(1)
+	}
+
+	broker := os.Getenv("KAFKA_BROKER")
+	if broker == "" {
+		fmt.Println("Cannot get broker in environment variables")
+		panic(1)
+	}
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	eventChannel := make(chan []byte)
 	defer close(eventChannel)
 
-	badgerOptions := badger.DefaultOptions("./tmp/badger/")
+	badgerOptions := badger.DefaultOptions(badgerLocation)
 	badgerOptions.Logger = nil
 	repo, err := repository.NewBadger(&badgerOptions)
 	if err != nil {
@@ -35,7 +53,7 @@ func main() {
 		Repository: repo,
 		WriteMessageChannel: eventChannel,
 		WriterConfig: kafka.WriterConfig{
-			Brokers: []string{string("127.0.0.1:34439")},
+			Brokers: []string{broker},
 			Topic:   "smth",
 			Balancer: &kafka.Hash{},
 			BatchSize:    1,               // how many messages to batch before flushing
@@ -43,7 +61,7 @@ func main() {
 			Async:        false,             // true = fire and forget, no error returned
 		},
 		ReaderConfig: kafka.ReaderConfig{
-			Brokers:   []string{string("127.0.0.1:34439")},
+			Brokers:   []string{broker},
 			Topic:     "smth",
 			GroupID:   "group-0",
 			MinBytes:  1,
@@ -81,7 +99,7 @@ func main() {
 		}
 	}()
 
-	err = app.Start(ctx)
+	err = app.Start(ctx, port)
 	if err != nil {
 		fmt.Printf("Cannot start application: %s", err.Error())
 	}

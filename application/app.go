@@ -26,10 +26,10 @@ func New(eventCh chan []byte, appConfig *global.Config) *Application {
 	return app
 }
 
-func (a *Application) Start(ctx context.Context) error {
+func (a *Application) Start(ctx context.Context, port string) error {
 	server := &http.Server{
 		Handler: a.handler,
-		Addr:    ":3000",
+		Addr:    fmt.Sprintf(":%s", port),
 	}
 	defer func() {
 		fmt.Println("Closing server...")
