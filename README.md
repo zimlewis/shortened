@@ -41,7 +41,7 @@ docker compose up
 ```bash
 curl -X POST http://localhost:8080/ \
      -H "Content-Type: application/json" \
-     -d '{"shortened": "ggl", "full": "https://google.com"}'
+     -d '{"full": "https://google.com"}'
 ```
 
 **Get click count**

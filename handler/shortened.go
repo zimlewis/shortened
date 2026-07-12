@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 
 	"github.com/dgraph-io/badger/v4"
@@ -185,7 +186,6 @@ func AddShortened(
 	repo repository.Repository,
 ) http.HandlerFunc {
 	type Body struct {
-		Shortened string `json:"shortened"`
 		Full      string `json:"full"`
 	}
 	return func(writer http.ResponseWriter, request *http.Request) {
@@ -210,7 +210,10 @@ func AddShortened(
 			return
 		}
 
-		err = repo.AddShortenedLink(ctx, body.Shortened, body.Full)
+		// I love jjs
+		shortened := randString(10)
+
+		err = repo.AddShortenedLink(ctx, shortened, body.Full)
 		if err != nil {
 			fmt.Printf("Cannot add to database: %s\n", err.Error())
 
@@ -227,6 +230,30 @@ func AddShortened(
 			return
 		}
 
-		writer.WriteHeader(http.StatusCreated)
+
+		rsp := JSON{
+			"shortened": shortened,
+			"full": body.Full,
+		}
+
+		b, err := json.Marshal(rsp)
+		if err == nil {
+			writer.WriteHeader(http.StatusCreated)
+			writer.Write(b)
+			return
+		}
+
+		writer.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func randString(n int) string {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	
+	b := make([]byte, n)
+	for i := range n {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+
+	return string(b)
 }
