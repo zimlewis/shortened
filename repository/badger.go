@@ -88,9 +88,19 @@ func (repo *BadgerRepository) AddShortenedLink(ctx context.Context, shortened st
 			return errors.New("Cannot add link to already exist shorten link")
 		}
 
+		err = txn.Set(key, []byte(full)) 
+		if err != nil {
+			return fmt.Errorf("Cannot set the link to the shortened link: \n%w", err)
+		}
 
-		err = txn.Set(fmt.Appendf(nil, "%s:full", shortened), []byte(full)) 
-		return err
+		countValue := make([]byte, 4)
+		binary.LittleEndian.PutUint32(countValue, 0)
+		countKey := fmt.Appendf(nil, "%s:count", shortened)
+		if err = txn.Set(countKey, countValue); err != nil {
+			return fmt.Errorf("Cannot set the count for the link: \n%w", err)
+		}
+
+		return nil
 	})
 
 	if err != nil {
