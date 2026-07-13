@@ -1,10 +1,16 @@
 # Shortened
 
-An overengineered link shortened to practice kafka, goroutin and channel
+An overengineered link shortener to practice distributed streaming, concurrency, and event-driven architecture. 
 
 ## Description
 
-This project is created for me to learn more about kafka, channel and goroutin. Every time a link get cliked, the handler of the http will first find the full url of the saved link, if it success then it will fire a signal to the channel which will send it to a goroutin that run kafka message publisher and then write it to kafka server, the consumer will then take the message, then execute a database update that will increase the counter of the link
+A high-performance URL shortener. It uses **Go Channels** and **Goroutines** for asynchronous processing, publishing click events to **Apache Kafka** to update metrics without delaying user redirects.
+
+## Features
+
+- **Asynchronous Metrics:** Non-blocking processing of clicks.
+- **Event-Driven:** Kafka-backed analytics.
+- **High Concurrency:** Optimized for speed.
 
 ## Getting Started
 
@@ -29,7 +35,7 @@ docker compose up
 
 | Method | Endpoint | Description | Request Body |
 | --- | --- | --- | --- |
-| `POST` | `/` | Add a new shortened link | `{"shortened": "slug", "full": "https://example.com"}` |
+| `POST` | `/` | Add a new shortened link | `{"full": "https://example.com"}` |
 | `GET` | `/{id}` | Redirect to the full URL | N/A |
 | `GET` | `/{id}/count` | Get the click count for a link | N/A |
 | `PUT` | `/{id}` | Update the full URL of an existing link | `{"full": "https://new-url.com"}` |
@@ -39,16 +45,15 @@ docker compose up
 
 **Create a link**
 ```bash
-curl -X POST http://localhost:8080/ \
+curl -X POST http://localhost:3000/ \
      -H "Content-Type: application/json" \
      -d '{"full": "https://google.com"}'
 ```
 
 **Get click count**
 ```bash
-curl http://localhost:8080/ggl/count
+curl http://localhost:3000/ggl/count
 ```
-
 
 
 
